@@ -1,0 +1,355 @@
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+public class RoadCar extends JFrame {
+
+	// 宣告
+	ImageIcon[] road = new ImageIcon[9];
+	ImageIcon head = new ImageIcon("img/u.gif");
+	ImageIcon hithead = new ImageIcon("img/hu.gif");
+	ImageIcon rock = new ImageIcon("img/rock.gif");
+	ImageIcon heart = new ImageIcon("img/life.gif");
+	ImageIcon sheart = new ImageIcon("img/slife.gif");
+	ImageIcon noheart = new ImageIcon("img/nolife.gif");
+
+	int road_id = 0;
+	int head_positionx = 103;
+	int head_positiony = 570;
+	int rock_id = 0;
+	int heart_id = 0;
+	int time = 0;
+	int life = 3;
+	int ok_putheart = -1;
+	int[] rock_positionx = new int[1000];
+	int[] rock_positiony = new int[1000];
+	int[] heart_positionx = new int[1000];
+	int[] heart_positiony = new int[1000];
+
+	boolean isStart = false;
+	boolean isHit_rock = false;
+	boolean isHit_heart = false;
+
+	Random r = new Random();
+	Timer t = new Timer();
+
+	// 主程式
+	public static void main(String[] args) {
+		RoadCar roadCar = new RoadCar();
+
+		roadCar.setVisible(true);
+	}
+
+	// 組織
+	public RoadCar() {
+
+		initFrame();
+		initRoad();
+
+		Panel panel = new Panel();
+		this.add(panel);
+
+		Action action = new Action();
+		this.addKeyListener(action);
+		this.setFocusable(true);
+
+		t.schedule(new Timertask(), 1000, 35);
+	}
+
+	// frame
+	void initFrame() {
+		this.setTitle("Road Car Game");
+		int w = 500;
+		int h = 850;
+		time = 0;
+		this.setSize(w, h);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		int sw = Toolkit.getDefaultToolkit().getScreenSize().width;
+		int sh = Toolkit.getDefaultToolkit().getScreenSize().height;
+
+		this.setLocation((sw - w) / 2, (sh - h) / 2);
+	}
+
+	// 初始化
+	void initRoad() {
+		road_id = 0;
+		ok_putheart = -1;
+		head_positionx = 103;
+		head_positiony = 570;
+		rock_id = 0;
+		heart_id = 0;
+		life = 3;
+		time = 0;
+		isStart = false;
+		isHit_rock = false;
+		isHit_heart = false;
+
+		heart_positionx[0] = r.nextInt(3) * 65 + 38;
+		heart_positiony[0] = -30;
+		rock_positionx[0] = r.nextInt(3) * 65 + 38;
+		rock_positiony[0] = -30;
+	}
+
+	// 物件跑動
+	void run_Object() {
+
+		if (rock_positiony[rock_id] < 600) {
+			rock_positiony[rock_id] += 15;
+		}
+
+		if (rock_id > 0) {
+			if (rock_positiony[rock_id - 1] < 600) {
+				rock_positiony[rock_id - 1] += 15;
+			}
+		}
+
+		if (ok_putheart == 0 && heart_positiony[heart_id] < 600 && !isHit_heart) {
+			heart_positiony[heart_id] += 15;
+		}
+
+	}
+
+	// 撞到物件
+	void hit_Object() {
+		if (head_positionx == rock_positionx[rock_id] && head_positiony - 15 == rock_positiony[rock_id]) {
+			isHit_rock = true;
+			life--;
+			time++;
+		}
+
+		if (rock_id > 0) {
+			if (head_positionx == rock_positionx[rock_id - 1] && head_positiony - 15 == rock_positiony[rock_id - 1]) {
+				isHit_rock = true;
+				life--;
+				time++;
+			}
+		}
+
+		if (head_positionx == heart_positionx[heart_id] && head_positiony - 15 == heart_positiony[heart_id]) {
+			//isHit_heart = true;
+			life++;
+		}
+
+	}
+
+	// 物件放置
+	void put_Object() {
+
+		// 放石頭
+		if (rock_positiony[rock_id] == 420) {
+			rock_id++;
+
+			rock_positionx[rock_id] = r.nextInt(3) * 65 + 38;
+			rock_positiony[rock_id] = 0;
+		}
+
+		// 放愛心
+		
+		//重製
+		if (heart_positiony[heart_id] == 600 && rock_positiony[rock_id] == 0) {
+			ok_putheart = -1;
+			isHit_heart = false;
+			heart_id++;
+		}
+
+		if (rock_positiony[rock_id] == 0 && ok_putheart != 0 && life < 3) {
+			ok_putheart = r.nextInt(5);
+			if (ok_putheart == 0) {
+
+				heart_positiony[heart_id] = 0;
+
+				// 愛心和石頭不重疊
+				while (true) {
+					heart_positionx[heart_id] = r.nextInt(3) * 65 + 38;
+					if (heart_positionx[heart_id] != rock_positionx[rock_id]) {
+						break;
+					}
+
+				}
+			}
+		}
+
+	}
+
+	// 畫面
+	class Panel extends JPanel {
+		public Panel() {
+			road_img();
+			this.setBackground(Color.black);
+		}
+
+		@Override
+		public void paint(Graphics g) {
+
+			super.paint(g);
+
+			g.drawImage(road[road_id].getImage(), 30, 30, null);
+			head.paintIcon(this, g, head_positionx, head_positiony);
+
+			if (rock_positiony[rock_id] < 600) {
+				rock.paintIcon(this, g, rock_positionx[rock_id], rock_positiony[rock_id]);
+			}
+
+			if (rock_id > 0) {
+				if (rock_positiony[rock_id - 1] < 600) {
+					rock.paintIcon(this, g, rock_positionx[rock_id - 1], rock_positiony[rock_id - 1]);
+				}
+			}
+
+			if (ok_putheart == 0 && heart_positiony[heart_id] < 600 && !isHit_heart) {
+				sheart.paintIcon(this, g, heart_positionx[heart_id], heart_positiony[heart_id]);
+			}
+
+			if (life == 3) {
+				heart.paintIcon(this, g, 250, 50);
+				heart.paintIcon(this, g, 250, 175);
+				heart.paintIcon(this, g, 250, 300);
+			}
+			if (life == 2) {
+				noheart.paintIcon(this, g, 250, 50);
+				heart.paintIcon(this, g, 250, 175);
+				heart.paintIcon(this, g, 250, 300);
+			}
+			if (life == 1) {
+				noheart.paintIcon(this, g, 250, 50);
+				noheart.paintIcon(this, g, 250, 175);
+				heart.paintIcon(this, g, 250, 300);
+			}
+			if (life == 0) {
+				noheart.paintIcon(this, g, 250, 50);
+				noheart.paintIcon(this, g, 250, 175);
+				noheart.paintIcon(this, g, 250, 300);
+			}
+
+			if (!isStart && life != 0) {
+				g.setColor(Color.white);
+				g.setFont(new Font("微軟正黑體", Font.BOLD, 30));
+				g.drawString("Press Enter to Start", 100, 700);
+				g.setFont(new Font("微軟正黑體", Font.BOLD, 15));
+				g.drawString("(Press Space key if need to pause)", 115, 725);
+			}
+
+			if (life == 0) {
+				g.setColor(Color.red);
+				g.setFont(new Font("微軟正黑體", Font.BOLD, 25));
+				g.drawString("Game Over Press Enter to Restart", 50, 700);
+				hithead.paintIcon(this, g, head_positionx, head_positiony);
+				rock.paintIcon(this, g, rock_positionx[rock_id], rock_positiony[rock_id]);
+				if (rock_id > 0) {
+					rock.paintIcon(this, g, rock_positionx[rock_id - 1], rock_positiony[rock_id - 1]);
+				}
+			}
+
+			g.setFont(new Font("微軟正黑體", Font.BOLD, 25));
+			g.drawString("ok: " + ok_putheart, 300, 500);
+			g.drawString("life: " + life + "", 300, 525);
+			g.drawString("heart id: " + heart_id, 300, 550);
+
+			if (rock_id > 0) {
+				g.drawString(rock_id - 1 + " y: " + rock_positiony[rock_id - 1] + "", 300, 650);
+			}
+
+			if (isHit_rock) {
+				hithead.paintIcon(this, g, head_positionx, head_positiony);
+			}
+
+			put_Object();
+			isHit_rock = false;
+
+		}
+
+		void road_img() {
+
+			road[0] = new ImageIcon("img/0.jpg");
+			road[1] = new ImageIcon("img/1.jpg");
+			road[2] = new ImageIcon("img/2.jpg");
+			road[3] = new ImageIcon("img/3.jpg");
+			road[4] = new ImageIcon("img/4.jpg");
+			road[5] = new ImageIcon("img/5.jpg");
+			road[6] = new ImageIcon("img/6.jpg");
+			road[7] = new ImageIcon("img/7.jpg");
+			road[8] = new ImageIcon("img/8.jpg");
+		}
+
+	}
+
+	// 動畫
+	class Timertask extends TimerTask {
+		@Override
+		public void run() {
+			if (isStart && life != 0) {
+				road_id++;
+				road_id %= 8;
+
+				run_Object();
+				hit_Object();
+
+			} else {
+
+			}
+
+			repaint();
+		}
+
+	}
+
+	// 行動
+
+	// 行動
+	class Action implements KeyListener {
+		public void keyPressed(KeyEvent e) {
+			int KeyCode = e.getKeyCode();
+
+			if (KeyCode == KeyEvent.VK_ENTER && life != 0) {
+				isStart = true;
+			}
+
+			if (KeyCode == KeyEvent.VK_SPACE) {
+				isStart = false;
+			}
+
+			if (KeyCode == KeyEvent.VK_ENTER && life == 0) {
+				initRoad();
+			}
+
+			if (KeyCode == KeyEvent.VK_RIGHT && head_positionx != 168 && isStart && life != 0) {
+				head_positionx += 65;
+			}
+
+			if (KeyCode == KeyEvent.VK_LEFT && head_positionx != 38 && isStart && life != 0) {
+				head_positionx -= 65;
+			}
+
+			if (KeyCode == KeyEvent.VK_UP && head_positiony != 30 && isStart && life != 0) {
+				head_positiony -= 15;
+			}
+
+			if (KeyCode == KeyEvent.VK_DOWN && head_positiony != 570 && isStart && life != 0) {
+				head_positiony += 15;
+			}
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+
+		}
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+		}
+
+	}
+
+}
