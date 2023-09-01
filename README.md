@@ -1,6 +1,6 @@
 # The Road Car Challenge
 
-<img src="video/Road-Car.gif" width="960" height="540">
+<img src="video/Road-Car.gif" width="640" height="360">
 
 ## Introduction
 
